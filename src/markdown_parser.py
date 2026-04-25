@@ -24,10 +24,10 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     return new_nodes
 
 
-def extract_markdown_images(text): #return list of tups
-    matches = re.findall(r"!\[(+[\w\d])\]\((+[\w\d])\)", text)
+def extract_markdown_images(text):
+    matches = re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
     return matches
 
-def extract_markdown_links(text): #return list of tups
-    matches = re.findall(r"!\[([\w\d]+)\]\(([\w\d]+)\)", text)
+def extract_markdown_links(text):
+    matches = re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
     return matches

@@ -10,6 +10,7 @@ class TestTextToHtml(unittest.TestCase):
         text_node = TextNode("bold text", TextType.BOLD_TEXT)
         transformed_text_node = text_node_to_html_node(text_node)
         html_node = LeafNode("b", "bold text")
+        self.assertEqual(transformed_text_node.tag, html_node.tag)
         self.assertEqual(transformed_text_node.value, html_node.value)
 
     def test_text(self):

@@ -1,12 +1,14 @@
 import unittest
 
 from textnode import TextNode, TextType
-from markdown_parser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links
-
+from markdown_parser import (
+    split_nodes_delimiter,
+    extract_markdown_images,
+    extract_markdown_links,
+)
 
 
 class TestRegexExtractors(unittest.TestCase):
-
     def test_extract_markdown_images(self):
         matches = extract_markdown_images(
             "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
@@ -14,18 +16,13 @@ class TestRegexExtractors(unittest.TestCase):
         self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
 
     def test_extract_markdown_links(self):
-        matches = extract_markdown_images(
+        matches = extract_markdown_links(
             "This is text with an [link](https://i.imgur.com/zjjcJ.png). How do you like it?"
         )
-        print(matches)
         self.assertListEqual([("link", "https://i.imgur.com/zjjcJ.png")], matches)
 
 
-
-
-
 class TestSplitNodesDelimiter(unittest.TestCase):
-
     def test_no_nodes(self):
         result = split_nodes_delimiter([], "*", TextType.BOLD_TEXT)
         self.assertEqual(result, [])
@@ -89,8 +86,7 @@ class TestSplitNodesDelimiter(unittest.TestCase):
             TextNode("already bold", TextType.BOLD_TEXT),
         ]
 
-        # If you skip empty strings, remove that expected node
-        self.assertEqual(result, [n for n in expected if n.text != ""])
+        self.assertEqual(result, expected)
 
     def test_adjacent_delimiters(self):
         nodes = [TextNode("hello **world**", TextType.PLAIN_TEXT)]
@@ -106,8 +102,7 @@ class TestSplitNodesDelimiter(unittest.TestCase):
             TextNode("", TextType.PLAIN_TEXT),
         ]
 
-        # Adjust depending on whether you filter empty strings
-        self.assertEqual(result, [n for n in expected if n.text != ""])
+        self.assertEqual(result, expected)
 
 
 if __name__ == "__main__":
