@@ -1,7 +1,27 @@
 import unittest
 
 from textnode import TextNode, TextType
-from markdown_parser import split_nodes_delimiter  # adjust import
+from markdown_parser import split_nodes_delimiter, extract_markdown_images, extract_markdown_links
+
+
+
+class TestRegexExtractors(unittest.TestCase):
+
+    def test_extract_markdown_images(self):
+        matches = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
+
+    def test_extract_markdown_links(self):
+        matches = extract_markdown_images(
+            "This is text with an [link](https://i.imgur.com/zjjcJ.png). How do you like it?"
+        )
+        print(matches)
+        self.assertListEqual([("link", "https://i.imgur.com/zjjcJ.png")], matches)
+
+
+
 
 
 class TestSplitNodesDelimiter(unittest.TestCase):
