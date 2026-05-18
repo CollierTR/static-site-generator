@@ -1,4 +1,5 @@
 import re
+from enum import Enum, auto
 from textnode import TextType, TextNode
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
@@ -111,10 +112,46 @@ def text_to_textnodes(text):
     nodes = split_nodes_link(nodes)
     return nodes
 
-    
-    
+def markdown_to_blocks(markdown_document):
+    blocks = markdown_document.split("\n\n")
+    cleaned_blocks = []
+
+    for block in blocks:
+        cleaned_block = block.strip()
+        if not block:
+            continue
+        cleaned_blocks.append(cleaned_block)
+    return cleaned_blocks
 
 
+class BlockType(Enum):
+    PARAGRAPH = auto()
+    HEADING = auto()
+    CODE = auto()
+    QUOTE = auto()
+    UNORDERD_LIST = auto()
+    ORDERED_LIST = auto()
+
+def block_to_block_type(markdown_block):
+    heading_re = r'^(#{1,6})\s+(.+)$'
+    code_block_re = r'^```[\t ]*\n([\s\S]*?)\n```$'
+    quote_block_re = r'^(?:>\s?.+(?:\n|$))+'
+    unordered_list_re = r'^(?:-\s+.+(?:\n|$))+'
+    ordered_list_re = r'^(?:\d+\.\s+.+(?:\n|$))+'
+    
+    match markdown_block:
+        case _ if re.match(heading_re, markdown_block):
+            return BlockType.HEADING
+        case _ if re.match(code_block_re, markdown_block):
+            return BlockType.CODE
+        case _ if re.match(quote_block_re, markdown_block):
+            return BlockType.QUOTE
+        case _ if re.match(unordered_list_re, markdown_block):
+            return BlockType.UNORDERD_LIST
+        case _ if re.match(ordered_list_re, markdown_block):
+            return BlockType.ORDERED_LIST
+        case _:
+            return BlockType.PARAGRAPH
 
 
 

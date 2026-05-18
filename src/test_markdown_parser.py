@@ -8,7 +8,69 @@ from markdown_parser import (
     split_nodes_image,
     split_nodes_link,
     text_to_textnodes,
+    markdown_to_blocks,
+    BlockType,
+    block_to_block_type,
 )
+
+
+class TestMarkdownToBlocks(unittest.TestCase):
+    def test_markdown_to_blocks(self):
+        md = """
+This is **bolded** paragraph
+
+This is another paragraph with _italic_ text and `code` here
+This is the same paragraph on a new line
+
+- This is a list
+- with items
+"""
+        blocks = markdown_to_blocks(md)
+        self.assertEqual(
+            blocks,
+            [
+                "This is **bolded** paragraph",
+                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                "- This is a list\n- with items",
+            ],
+        )
+
+    def test_header_to_correct_BlockType(self):
+        correct_block_type = BlockType.HEADING
+        markdown_block = "### This is a heading!"
+        converted_block = block_to_block_type(markdown_block)
+        self.assertEqual(converted_block, correct_block_type)
+
+    def test_code_to_correct_BlockType(self):
+        correct_block_type = BlockType.CODE
+        markdown_block = f"""
+```
+const lang = "Not Python"
+
+console.log(lang)
+
+```
+"""
+        converted_block = block_to_block_type(markdown_block.strip())
+        self.assertEqual(converted_block, correct_block_type)
+
+    def test_paragraph_to_correct_BlockType(self):
+        correct_block_type = BlockType.PARAGRAPH
+        markdown_block = "This is NOT a heading!"
+        converted_block = block_to_block_type(markdown_block)
+        self.assertEqual(converted_block, correct_block_type)
+
+    def test_quote_to_correct_BlockType(self):
+        correct_block_type = BlockType.QUOTE
+        markdown_block = f"""
+        > This is a 
+        > quote!
+        """
+        converted_block = block_to_block_type(markdown_block.strip())
+        self.assertEqual(converted_block, correct_block_type)
+
+
+
 
 class TestTextToTextNodes(unittest.TestCase):
     def test_text_to_textnode(self):
