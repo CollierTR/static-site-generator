@@ -2,6 +2,17 @@ from textnode import TextType
 from leafnode import LeafNode
 
 def text_node_to_html_node(text_node):
+    """Convert a TextNode to its corresponding LeafNode HTML representation.
+
+    Args:
+        text_node: A TextNode instance to convert.
+
+    Returns:
+        A LeafNode representing the HTML element.
+
+    Raises:
+        Exception: If the TextType is not recognized.
+    """
     match text_node.text_type:
         case TextType.PLAIN_TEXT:
             return LeafNode(None, text_node.text)

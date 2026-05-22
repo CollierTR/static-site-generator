@@ -10,11 +10,19 @@ class TextType(Enum):
 
 class TextNode():
     def __init__(self, text, text_type, link=None):
+        """Initialize a TextNode.
+
+        Args:
+            text: The text content.
+            text_type: The type of text (TextType enum value).
+            link: Optional URL for links or images.
+        """
         self.text = text
         self.text_type = text_type
         self.link = link
 
     def __eq__(self, other):
+        """Compare two TextNode instances for equality."""
         return (
             self.text == other.text
             and self.link == other.link
@@ -22,4 +30,5 @@ class TextNode():
         )
 
     def __repr__(self):
+        """Return a string representation of the TextNode."""
         return f"TextNode({self.text}, {self.text_type.value}, {self.link})"
