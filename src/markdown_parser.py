@@ -1,6 +1,7 @@
 import re
 from enum import Enum, auto
 from textnode import TextType, TextNode
+from text_to_html import text_node_to_html_node
 from htmlnode import HTMLNode
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
@@ -218,21 +219,16 @@ def block_to_block_type(markdown_block):
         case _:
             return BlockType.PARAGRAPH
 
-def block_to_html(block, block_type):
-    """Convert a markdown block and its type to an HTMLNode.
+def markdown_header_to_html(line: str) -> str:
+    match = re.match(r'^(#{1,6})\s+(.*)$', line)
 
-    Args:
-        block: A single markdown block string.
-        block_type: The BlockType of the block.
+    if not match:
+        return line
 
-    Returns:
-        An HTMLNode representing the block.
-    """
-    match block_type:
-        case _ if BlockType.PARAGRAPH:
-            html_node = HTMLNode("p", block)
-        case _:
-            return "base case"
+    level = len(match.group(1))
+    content = match.group(2).strip()
+
+    return f"<h{level}>{content}</h{level}>"
 
 def markdown_to_html_node(markdown):
     """Convert a full markdown document to an HTMLNode.
@@ -244,8 +240,49 @@ def markdown_to_html_node(markdown):
         An HTMLNode representing the document.
     """
     blocks = markdown_to_blocks(markdown)
-    for block in blocks:
-        block_type = block_to_block_type(block)
-        html_node = block_to_html(block, block_type)
-    return None
 
+    child_html = ""
+
+    for block in blocks:
+        # Determine BlockType
+        block_type = block_to_block_type(block)
+
+        if block_type == BlockType.CODE:
+            code_node = TextNode(block, TextType.CODE_TEXT)
+            code = text_node_to_html_node(code_node)
+            child_html += f"<pre>{code.to_html()}</pre>"
+            continue
+
+        prosessed_block = process_inline_markdown(block)
+        html_nodes = textNodes_to_html_nodes(prosessed_block)
+        html = ""
+        for html_node in html_nodes:
+            html += html_node.to_html()
+
+        if block_type == BlockType.HEADING:
+            html = markdown_header_to_html(block)
+            child_html += html
+        if block_type == BlockType.PARAGRAPH:
+            child_html += f"<p>{html}</p>"
+        if block_type == BlockType.QUOTE:
+            child_html += f"<blockquote>{html}</blockquote>"
+        if block_type == BlockType.UNORDERD_LIST:
+            child_html += f"<ul>{html}</ul>"
+        if block_type == BlockType.ORDERED_LIST:
+            child_html += f"<ol>{html}</ol>"
+
+    return f"<div>{child_html}</div>"
+
+def process_inline_markdown(block_of_markdown): # Return array of textNodes
+    text_nodes = text_to_textnodes(block_of_markdown)
+    cleaned_nodes = split_nodes_link(split_nodes_image(text_nodes))
+    return cleaned_nodes
+
+def textNodes_to_html_nodes(textNode_array):
+    if not textNode_array:
+        return []
+    html_nodes = []
+    for textNode in textNode_array:
+        htmlNode = text_node_to_html_node(textNode)
+        html_nodes.append(htmlNode)
+    return html_nodes
