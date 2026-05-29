@@ -1,5 +1,7 @@
 import os
 import shutil
+import re
+from markdown_parser import markdown_to_html_node
 
 def copy_static_files():
     target_directory_path = os.path.join("public")
@@ -28,3 +30,45 @@ def recursive_copy(src_path, target_path):
             os.mkdir(os.path.join(target_path, file))
             recursive_copy(os.path.join(src_path, file), os.path.join(target_path, file))
             print(f"    Copying {os.path.join(src_path, file)} directory to {os.path.join(target_path, file)}")
+
+def extract_title(markdown):
+    match = re.match(r"^#\s+(.*)$", markdown.lstrip())
+    if not match:
+        raise Exception("No title in file!")
+    return (match[0].split(" ", 1)[1])
+
+
+def generate_page(from_path, template_path, dest_path):
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+
+    # read file from_path
+    with open(from_path, encoding="utf-8") as s:
+        src_file = s.read()
+
+    # read template
+    with open(template_path, encoding="utf-8") as t:
+        template_file = t.read()
+
+    html = markdown_to_html_node(src_file).to_html()
+    title = extract_title(src_file)
+
+    template_file = template_file.replace("{{ Title }}", title)
+    template_file = added_title.replace("{{ Content }}", html)
+
+    # ensure destination directory exists
+    dest_dir = os.path.dirname(dest_path)
+    if dest_dir:
+        os.makedirs(dest_dir, exist_ok=True)
+
+    # write output file
+    with open(dest_path, "w", encoding="utf-8") as f:
+        f.write(template_file)
+
+
+
+
+
+
+
+
+
