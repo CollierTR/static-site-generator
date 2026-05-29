@@ -2,22 +2,11 @@ import re
 from enum import Enum, auto
 from textnode import TextType, TextNode
 from text_to_html import text_node_to_html_node
-from htmlnode import HTMLNode
+from parentnode import ParentNode
+from leafnode import LeafNode
+
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
-    """Split TextNodes by a delimiter and wrap delimited sections with a new type.
-
-    Args:
-        old_nodes: List of TextNode instances to split.
-        delimiter: String delimiter to split on (e.g. '**', '*').
-        text_type: TextType to assign to delimited sections.
-
-    Returns:
-        List of TextNode instances with delimited sections transformed.
-
-    Raises:
-        Exception: If a matching closing delimiter is not found.
-    """
     if not old_nodes:
         return []
 
@@ -39,39 +28,18 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
 
     return new_nodes
 
+
 def extract_markdown_images(text):
-    """Extract markdown image references from text.
-
-    Args:
-        text: String containing markdown image syntax (![alt](url)).
-
-    Returns:
-        List of (alt_text, url) tuples.
-    """
     matches = re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
     return matches
 
+
 def extract_markdown_links(text):
-    """Extract markdown link references from text (excluding images).
-
-    Args:
-        text: String containing markdown link syntax ([text](url)).
-
-    Returns:
-        List of (anchor_text, url) tuples.
-    """
     matches = re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
     return matches
-    
+
+
 def split_nodes_link(old_nodes):
-    """Split TextNodes by markdown links.
-
-    Args:
-        old_nodes: List of TextNode instances to split.
-
-    Returns:
-        List of TextNode instances with links separated into LINK nodes.
-    """
     if not old_nodes:
         return []
 
@@ -90,7 +58,7 @@ def split_nodes_link(old_nodes):
         remainder = node.text
 
         for link in links:
-            string = re.split(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", remainder, 1)
+            string = re.split(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", remainder, maxsplit=1)
             if string[0]:
                 new_nodes.append(TextNode(string[0], TextType.PLAIN_TEXT))
             new_nodes.append(TextNode(link[0], TextType.LINK, link[1]))
@@ -98,19 +66,11 @@ def split_nodes_link(old_nodes):
 
         if remainder:
             new_nodes.append(TextNode(remainder, TextType.PLAIN_TEXT))
-            
 
     return new_nodes
-    
+
+
 def split_nodes_image(old_nodes):
-    """Split TextNodes by markdown images.
-
-    Args:
-        old_nodes: List of TextNode instances to split.
-
-    Returns:
-        List of TextNode instances with images separated into IMAGE nodes.
-    """
     if not old_nodes:
         return []
 
@@ -129,7 +89,7 @@ def split_nodes_image(old_nodes):
         remainder = node.text
 
         for image in images:
-            string = re.split(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", remainder, 1)
+            string = re.split(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", remainder, maxsplit=1)
             if string[0]:
                 new_nodes.append(TextNode(string[0], TextType.PLAIN_TEXT))
             new_nodes.append(TextNode(image[0], TextType.IMAGE, image[1]))
@@ -137,22 +97,11 @@ def split_nodes_image(old_nodes):
 
         if remainder:
             new_nodes.append(TextNode(remainder, TextType.PLAIN_TEXT))
-            
 
     return new_nodes
 
+
 def text_to_textnodes(text):
-    """Convert a raw markdown text string into a list of TextNodes.
-
-    Applies delimiter splitting (code, bold, italic), then extracts
-    images and links in order.
-
-    Args:
-        text: Raw markdown string.
-
-    Returns:
-        List of TextNode instances.
-    """
     nodes = [TextNode(text, TextType.PLAIN_TEXT)]
     nodes = split_nodes_delimiter(nodes, "`", TextType.CODE_TEXT)
     nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD_TEXT)
@@ -163,24 +112,18 @@ def text_to_textnodes(text):
     nodes = split_nodes_link(nodes)
     return nodes
 
+
 def markdown_to_blocks(markdown_document):
-    """Split a markdown document into blocks separated by blank lines.
-
-    Args:
-        markdown_document: Raw markdown string.
-
-    Returns:
-        List of stripped block strings.
-    """
     blocks = markdown_document.split("\n\n")
     cleaned_blocks = []
 
     for block in blocks:
         cleaned_block = block.strip()
-        if not block:
+        if not cleaned_block:
             continue
         cleaned_blocks.append(cleaned_block)
     return cleaned_blocks
+
 
 class BlockType(Enum):
     PARAGRAPH = auto()
@@ -190,93 +133,148 @@ class BlockType(Enum):
     UNORDERD_LIST = auto()
     ORDERED_LIST = auto()
 
+
 def block_to_block_type(markdown_block):
-    """Classify a markdown block into its BlockType.
+    lines = markdown_block.split("\n")
 
-    Args:
-        markdown_block: A single markdown block string.
+    if lines[0].strip().startswith("```"):
+        return BlockType.CODE
 
-    Returns:
-        The BlockType enum value for the block.
-    """
-    heading_re = r'^(#{1,6})\s+(.+)$'
-    code_block_re = r'^```[\t ]*\n([\s\S]*?)\n```$'
-    quote_block_re = r'^(?:>\s?.+(?:\n|$))+'
-    unordered_list_re = r'^(?:-\s+.+(?:\n|$))+'
-    ordered_list_re = r'^(?:\d+\.\s+.+(?:\n|$))+'
-    
-    match markdown_block:
-        case _ if re.match(heading_re, markdown_block):
-            return BlockType.HEADING
-        case _ if re.match(code_block_re, markdown_block):
-            return BlockType.CODE
-        case _ if re.match(quote_block_re, markdown_block):
-            return BlockType.QUOTE
-        case _ if re.match(unordered_list_re, markdown_block):
-            return BlockType.UNORDERD_LIST
-        case _ if re.match(ordered_list_re, markdown_block):
-            return BlockType.ORDERED_LIST
-        case _:
-            return BlockType.PARAGRAPH
+    if re.match(r"^#{1,6}\s+", markdown_block.lstrip()):
+        return BlockType.HEADING
 
-def markdown_header_to_html(line: str) -> str:
-    match = re.match(r'^(#{1,6})\s+(.*)$', line)
+    non_empty = [l for l in lines if l.strip()]
+    if non_empty and all(l.lstrip().startswith(">") for l in non_empty):
+        return BlockType.QUOTE
 
+    if non_empty and all(l.lstrip().startswith("- ") for l in non_empty):
+        return BlockType.UNORDERD_LIST
+
+    if non_empty and all(re.match(r"^\d+\.\s+", l.lstrip()) for l in non_empty):
+        return BlockType.ORDERED_LIST
+
+    return BlockType.PARAGRAPH
+
+
+def text_to_children(text):
+    text_nodes = text_to_textnodes(text)
+    html_nodes = []
+    for node in text_nodes:
+        if node.text_type == TextType.PLAIN_TEXT and not node.text:
+            continue
+        html_nodes.append(text_node_to_html_node(node))
+    return html_nodes
+
+
+def block_to_code_html_node(block):
+    lines = block.split("\n")
+
+    if lines and lines[0].strip().startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].strip().startswith("```"):
+        lines = lines[:-1]
+
+    if lines:
+        non_empty = [l for l in lines if l.strip()]
+        if non_empty:
+            min_indent = min(len(l) - len(l.lstrip()) for l in non_empty)
+            lines = [l[min_indent:] if len(l) >= min_indent else l for l in lines]
+
+    code_text = "\n".join(lines)
+    if code_text and not code_text.endswith("\n"):
+        code_text += "\n"
+
+    return ParentNode("pre", [LeafNode("code", code_text)])
+
+
+def block_to_heading_html_node(block):
+    match = re.match(r"^#{1,6}\s+(.*)$", block.lstrip())
     if not match:
-        return line
-
+        return ParentNode("p", text_to_children(block))
+    level = len(block) - len(block.lstrip())
+    match = re.match(r"^(#{1,6})\s+(.*)$", block.lstrip())
     level = len(match.group(1))
-    content = match.group(2).strip()
+    content = match.group(2)
+    return ParentNode(f"h{level}", text_to_children(content))
 
-    return f"<h{level}>{content}</h{level}>"
+
+def block_to_paragraph_html_node(block):
+    text = " ".join(block.split("\n"))
+    text = re.sub(r" +", " ", text).strip()
+    return ParentNode("p", text_to_children(text))
+
+
+def block_to_quote_html_node(block):
+    lines = block.split("\n")
+    stripped_lines = []
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith("> "):
+            stripped_lines.append(stripped[2:])
+        elif stripped.startswith(">"):
+            stripped_lines.append(stripped[1:])
+        else:
+            stripped_lines.append(line)
+    text = " ".join(stripped_lines)
+    text = re.sub(r" +", " ", text).strip()
+    return ParentNode("blockquote", text_to_children(text))
+
+
+def block_to_unordered_list_html_node(block):
+    lines = block.split("\n")
+    items = []
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith("- "):
+            content = stripped[2:]
+        elif stripped.startswith("-"):
+            content = stripped[1:]
+        else:
+            content = stripped
+        items.append(ParentNode("li", text_to_children(content)))
+    return ParentNode("ul", items)
+
+
+def block_to_ordered_list_html_node(block):
+    lines = block.split("\n")
+    items = []
+    for line in lines:
+        stripped = line.lstrip()
+        match = re.match(r"^\d+\.\s+(.*)$", stripped)
+        if match:
+            content = match.group(1)
+        else:
+            content = stripped
+        items.append(ParentNode("li", text_to_children(content)))
+    return ParentNode("ol", items)
+
 
 def markdown_to_html_node(markdown):
-    """Convert a full markdown document to an HTMLNode.
-
-    Args:
-        markdown: Raw markdown document string.
-
-    Returns:
-        An HTMLNode representing the document.
-    """
     blocks = markdown_to_blocks(markdown)
-
-    child_html = ""
+    children = []
 
     for block in blocks:
-        # Determine BlockType
         block_type = block_to_block_type(block)
 
         if block_type == BlockType.CODE:
-            code_node = TextNode(block, TextType.CODE_TEXT)
-            code = text_node_to_html_node(code_node)
-            child_html += f"<pre>{code.to_html()}</pre>"
-            continue
+            children.append(block_to_code_html_node(block))
+        elif block_type == BlockType.HEADING:
+            children.append(block_to_heading_html_node(block))
+        elif block_type == BlockType.QUOTE:
+            children.append(block_to_quote_html_node(block))
+        elif block_type == BlockType.UNORDERD_LIST:
+            children.append(block_to_unordered_list_html_node(block))
+        elif block_type == BlockType.ORDERED_LIST:
+            children.append(block_to_ordered_list_html_node(block))
+        else:
+            children.append(block_to_paragraph_html_node(block))
 
-        prosessed_block = process_inline_markdown(block)
-        html_nodes = textNodes_to_html_nodes(prosessed_block)
-        html = ""
-        for html_node in html_nodes:
-            html += html_node.to_html()
+    return ParentNode("div", children)
 
-        if block_type == BlockType.HEADING:
-            html = markdown_header_to_html(block)
-            child_html += html
-        if block_type == BlockType.PARAGRAPH:
-            child_html += f"<p>{html}</p>"
-        if block_type == BlockType.QUOTE:
-            child_html += f"<blockquote>{html}</blockquote>"
-        if block_type == BlockType.UNORDERD_LIST:
-            child_html += f"<ul>{html}</ul>"
-        if block_type == BlockType.ORDERED_LIST:
-            child_html += f"<ol>{html}</ol>"
 
-    return f"<div>{child_html}</div>"
+def process_inline_markdown(block_of_markdown):
+    return text_to_textnodes(block_of_markdown)
 
-def process_inline_markdown(block_of_markdown): # Return array of textNodes
-    text_nodes = text_to_textnodes(block_of_markdown)
-    cleaned_nodes = split_nodes_link(split_nodes_image(text_nodes))
-    return cleaned_nodes
 
 def textNodes_to_html_nodes(textNode_array):
     if not textNode_array:

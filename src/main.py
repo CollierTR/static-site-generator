@@ -1,8 +1,7 @@
 from textnode import TextNode, TextType
+from utils import copy_static_files
  
 def main():
-
-    node = TextNode("This is dummy text!", TextType.PLAIN_TEXT)
-    print(node)
+    copy_static_files()
 
 main()
