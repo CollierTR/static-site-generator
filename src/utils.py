@@ -32,10 +32,10 @@ def recursive_copy(src_path, target_path):
             print(f"    Copying {os.path.join(src_path, file)} directory to {os.path.join(target_path, file)}")
 
 def extract_title(markdown):
-    match = re.match(r"^#\s+(.*)$", markdown.lstrip())
+    match = re.search(r"^#\s+(.*)$", markdown, re.MULTILINE)
     if not match:
         raise Exception("No title in file!")
-    return (match[0].split(" ", 1)[1])
+    return match.group(1)
 
 
 def generate_page(from_path, template_path, dest_path):
@@ -53,7 +53,7 @@ def generate_page(from_path, template_path, dest_path):
     title = extract_title(src_file)
 
     template_file = template_file.replace("{{ Title }}", title)
-    template_file = added_title.replace("{{ Content }}", html)
+    template_file = template_file.replace("{{ Content }}", html)
 
     # ensure destination directory exists
     dest_dir = os.path.dirname(dest_path)

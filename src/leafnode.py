@@ -13,14 +13,9 @@ class LeafNode(HTMLNode):
 
 
     def to_html(self):
-        """Render the leaf node as an HTML string.
+        if self.tag in ("img", "br", "hr", "input", "area", "base", "col", "embed", "link", "meta", "param", "source", "track", "wbr"):
+            return f"<{self.tag}{self.props_to_html()}>"
 
-        Returns:
-            An HTML string representation of the node.
-
-        Raises:
-            ValueError: If value is empty or None.
-        """
         if not self.value:
             raise ValueError("Class requires a value")
 
