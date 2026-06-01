@@ -26,7 +26,7 @@ class TestParentNode(unittest.TestCase):
         parent_node = ParentNode("div", [child_node])
         self.assertEqual(
             parent_node.to_html(),
-            "<div><p><a href='www.google.com/test' target='_blank'>link</a><a href='www.google.com/anothertest'>another link</a></p></div>",
+            '<div><p><a href="www.google.com/test" target="_blank">link</a><a href="www.google.com/anothertest">another link</a></p></div>',
         )
 
 if __name__ == "__main__":

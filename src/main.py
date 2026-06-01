@@ -5,10 +5,9 @@ from os import path
  
 def main():
 
-    base_path = "/"
+    base_path = argv[1].rstrip("/") if len(argv) > 1 else "/"
 
-    if argv[1]:
-        base_path = argv[1]
+    print(f"base_path = {base_path}")
 
     copy_static_files()
     generate_pages_recursive("content/", "template.html", "docs/", base_path)

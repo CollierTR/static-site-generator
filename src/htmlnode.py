@@ -32,7 +32,7 @@ class HTMLNode():
         props_string = ""
 
         for key, value in self.props.items():
-            props_string += f" {key}='{value}'"
+            props_string += f' {key}="{value}"'
 
         return props_string
 

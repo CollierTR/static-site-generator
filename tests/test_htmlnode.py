@@ -15,7 +15,7 @@ class TestHTMLNode(unittest.TestCase):
         node = HTMLNode(tag="a", value="Hello World", props={"src": "www.goggle.com", "target": "_blank"})
         node2 = HTMLNode(tag="p", value="Hello World")
         self.assertEqual(node.value, node2.value)
-        self.assertEqual(node.props_to_html(), " src='www.goggle.com' target='_blank'")
+        self.assertEqual(node.props_to_html(), ' src="www.goggle.com" target="_blank"')
 
 
 
