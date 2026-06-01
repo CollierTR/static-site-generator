@@ -4,7 +4,7 @@ import re
 from markdown_parser import markdown_to_html_node
 
 def copy_static_files():
-    target_directory_path = os.path.join("public")
+    target_directory_path = os.path.join("docs")
     src_directory_path = os.path.join("static")
 
     if not os.path.exists(src_directory_path):

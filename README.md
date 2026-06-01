@@ -51,7 +51,7 @@ python3 src/main.py
 Preview locally:
 
 ```
-python3 -m http.server 8888 --directory public
+python3 -m http.server 8888 --directory docs
 ```
 
 Or run both steps with:
